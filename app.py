@@ -3,19 +3,19 @@ from groq import Groq
 import re
 import urllib.parse
 
-# 1. GEMINI UI ARCHITECTURE (CSS - AYNI KALDI)
+# 1. GEMINI UI ARCHITECTURE (Görsel Tasarım)
 st.set_page_config(page_title="Tarih Fabrikası AI", page_icon="✨", layout="centered")
 
 st.markdown("""
     <style>
-    /* Gemini Karanlık Tema */
+    /* Gemini Teması */
     .stApp {
         background-color: #131314 !important;
         color: #e3e3e3 !important;
         font-family: 'Inter', sans-serif;
     }
 
-    /* Başlık Alanı */
+    /* Başlık */
     .gemini-header {
         font-size: 2.8rem;
         font-weight: 500;
@@ -33,7 +33,7 @@ st.markdown("""
         margin-bottom: 2rem;
     }
 
-    /* MOD SEÇİMİ (RADIO) - TAM ORTALI VE BEYAZ METİN */
+    /* Mod Seçimi Butonları (Ortalı ve Beyaz) */
     div[data-testid="stRadio"] {
         display: flex;
         justify-content: center;
@@ -45,7 +45,7 @@ st.markdown("""
         gap: 15px;
     }
     div[data-testid="stRadio"] label p {
-        color: #ffffff !important; /* BEYAZ YAZI */
+        color: #ffffff !important;
         font-size: 1rem !important;
         font-weight: 500 !important;
     }
@@ -56,7 +56,7 @@ st.markdown("""
         border-radius: 24px !important;
     }
 
-    /* Giriş Kutusu (Pill Design) */
+    /* Input */
     .stTextInput > div > div > input {
         background-color: #1e1f20 !important;
         color: #ffffff !important;
@@ -66,7 +66,7 @@ st.markdown("""
         text-align: center;
     }
 
-    /* ARAŞTIR BUTONU (Gemini Mavi) */
+    /* Araştır Butonu */
     div.stButton {
         display: flex;
         justify-content: center;
@@ -80,11 +80,8 @@ st.markdown("""
         padding: 10px 40px !important;
         font-weight: 600 !important;
     }
-    div.stButton > button:hover {
-        background-color: #d3e3fd !important;
-    }
 
-    /* Metin ve Prompt Akışı (Sade Gemini Tarzı) */
+    /* Metin Alanları */
     .chat-bubble {
         max-width: 750px;
         margin: 20px auto;
@@ -97,12 +94,12 @@ st.markdown("""
         margin: 20px auto;
         line-height: 1.6;
         font-size: 0.95rem;
-        color: #a8c7fa; /* Promptlar için mavi ton */
+        color: #a8c7fa;
         font-family: monospace;
         white-space: pre-wrap;
     }
 
-    /* Kaynak Kartları */
+    /* Kaynaklar */
     .source-box {
         background-color: #1e1f20;
         border: 1px solid #444746;
@@ -122,35 +119,32 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 2. UI BAŞLANGIÇ
 st.markdown('<div class="gemini-header">Tarih Fabrikası</div>', unsafe_allow_html=True)
-st.markdown('<div class="gemini-subtitle">Yapay zeka ile doğrulanabilir tarih yolculuğu</div>', unsafe_allow_html=True)
+st.markdown('<div class="gemini-subtitle">Gerçek zamanlı akademik doğrulama ve vurucu içerik üretimi</div>', unsafe_allow_html=True)
 
-# Seçim ve Input
 mod = st.radio("", ["🎲 Otomatik", "✍️ Manuel"], horizontal=True, label_visibility="collapsed")
 ozel_konu = ""
 if mod == "✍️ Manuel":
     ozel_konu = st.text_input("", placeholder="Neyi merak ediyorsun?", label_visibility="collapsed")
 
-# 3. API VE GÜÇLENDİRİLMİŞ SİSTEM TALİMATI
+# 2. GÜÇLENDİRİLMİŞ MOTOR (SYSTEM PROMPT GÜNCELLENDİ)
 client = Groq(api_key="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")
 
-# BURASI DÜZELTİLDİ: Kanca ve Prompt emirleri geri eklendi
 SYSTEM_PROMPT = (
     "Sen akademik bir tarih profesörü ve viral içerik uzmanısın. "
-    "Şu kurallara KESİNLİKLE uy:\n"
-    "1. KANCA: İlk 2 cümle konuyla %100 bağlantılı, sarsıcı bir merak uyandırmalı.\n"
-    "2. METİN: Sade, akıcı bir Türkçe ile en az 450 kelime yaz. Başlık kullanma.\n"
-    "3. KAYNAKLAR: Sona 'KAYNAKLAR:' ekle ve gerçek kaynakları listele.\n"
-    "4. PROMPTLAR: En sona '---PROMPTLAR---' yazıp 8-15 adet numaralı, 9:16 dikey, sinematik İNGİLİZCE promptlar üret."
+    "Çıktılarında teknik başlık kullanma. ŞU KURALLARA KESİNLİKLE UY:\n\n"
+    "1. KANCA (HOOK): Metne en başta, konuyla %100 bağlantılı, sarsıcı ve 'Bunu biliyor muydunuz?' havasında "
+    "inanılmaz merak uyandırıcı 2-3 cümleyle başla. Okuyucuyu ilk saniyede yakalamalısın.\n"
+    "2. METİN: Sade, akıcı bir Türkçe ile en az 450-500 kelime uzunluğunda derin bir anlatım yap.\n"
+    "3. KAYNAKLAR: Metnin sonuna 'KAYNAKLAR:' ekle ve gerçek kitap/makale isimlerini listele.\n"
+    "4. PROMPTLAR: En sona '---PROMPTLAR---' yazıp 8-15 adet numaralı, sinematik İNGİLİZCE promptlar üret."
 )
 
-# 4. ÜRETİM
 if st.button("Araştır"):
     konu = ozel_konu if (mod == "✍️ Manuel" and ozel_konu) else "Tarihten çok sarsıcı ve kanıtlanmış bir olay seç."
     
     with st.spinner(""):
-        st.markdown('<p style="text-align:center; color:#8e918f;">Derin araştırma yapılıyor, kancalar hazırlanıyor...</p>', unsafe_allow_html=True)
+        st.markdown('<p style="text-align:center; color:#8e918f;">Biraz uzun sürebilir; çünkü bu araştırma kapsamında her şeyi gerçek ve doğrulanabilir kaynaklardan inceliyoruz. Lütfen Bekleyin...</p>', unsafe_allow_html=True)
         
         try:
             completion = client.chat.completions.create(
@@ -159,26 +153,26 @@ if st.button("Araştır"):
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": konu}
                 ],
-                temperature=0.65
+                temperature=0.7
             )
             
             output = completion.choices[0].message.content
             
             # İçerik Ayrıştırma
             if "---PROMPTLAR---" in output:
-                ust, prompts = output.split("---PROMPTLAR---")
+                main_part, prompts = output.split("---PROMPTLAR---")
             else:
-                ust, prompts = output, ""
+                main_part, prompts = output, ""
 
-            if "KAYNAKLAR:" in ust:
-                story, sources_raw = ust.split("KAYNAKLAR:")
+            if "KAYNAKLAR:" in main_part:
+                story, sources_raw = main_part.split("KAYNAKLAR:")
             else:
-                story, sources_raw = ust, ""
+                story, sources_raw = main_part, ""
 
-            # 5. GÖSTERİM
+            # GÖSTERİM
             st.markdown("---")
             
-            # Ana Metin (Kancalı)
+            # Kancalı Ana Metin
             st.markdown(f'<div class="chat-bubble">{story.strip()}</div>', unsafe_allow_html=True)
 
             # Kaynaklar
@@ -195,12 +189,11 @@ if st.button("Araştır"):
                             <a href="https://scholar.google.com/scholar?q={q}" target="_blank" class="source-btn">🎓 Akademik</a>
                         </div>
                         """, unsafe_allow_html=True)
-            
-            # BURASI DÜZELTİLDİ: Promptların gösterimi geri eklendi
-            if prompts:
-                 st.markdown('<p style="text-align:center; color:#8e918f; margin-top:40px;">Sinematik Görsel Promptları</p>', unsafe_allow_html=True)
-                 st.markdown(f'<div class="prompt-bubble">{prompts.strip()}</div>', unsafe_allow_html=True)
 
+            # Promptlar
+            if prompts:
+                st.markdown('<p style="text-align:center; color:#8e918f; margin-top:40px;">Görsel Üretim Promptları</p>', unsafe_allow_html=True)
+                st.markdown(f'<div class="prompt-bubble">{prompts.strip()}</div>', unsafe_allow_html=True)
 
         except Exception as e:
-            st.error(f"Hata: {e}")
+            st.error(f"Sistemsel Hata: {e}")

@@ -120,31 +120,34 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 st.markdown('<div class="gemini-header">Tarih Fabrikası</div>', unsafe_allow_html=True)
-st.markdown('<div class="gemini-subtitle">Gerçek zamanlı akademik doğrulama ve vurucu içerik üretimi</div>', unsafe_allow_html=True)
+st.markdown('<div class="gemini-subtitle">Provokatif kancalar ve akademik doğrulama ile tarih araştırması</div>', unsafe_allow_html=True)
 
 mod = st.radio("", ["🎲 Otomatik", "✍️ Manuel"], horizontal=True, label_visibility="collapsed")
 ozel_konu = ""
 if mod == "✍️ Manuel":
     ozel_konu = st.text_input("", placeholder="Neyi merak ediyorsun?", label_visibility="collapsed")
 
-# 2. GÜÇLENDİRİLMİŞ MOTOR (SYSTEM PROMPT GÜNCELLENDİ)
+# 2. PROVOKATİF SİSTEM TALİMATI (SYSTEM PROMPT)
 client = Groq(api_key="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")
 
 SYSTEM_PROMPT = (
-    "Sen akademik bir tarih profesörü ve viral içerik uzmanısın. "
+    "Sen akademik bir tarih profesörü ve viral içerik stratejistisin. "
     "Çıktılarında teknik başlık kullanma. ŞU KURALLARA KESİNLİKLE UY:\n\n"
-    "1. KANCA (HOOK): Metne en başta, konuyla %100 bağlantılı, sarsıcı ve 'Bunu biliyor muydunuz?' havasında "
-    "inanılmaz merak uyandırıcı 2-3 cümleyle başla. Okuyucuyu ilk saniyede yakalamalısın.\n"
-    "2. METİN: Sade, akıcı bir Türkçe ile en az 450-500 kelime uzunluğunda derin bir anlatım yap.\n"
-    "3. KAYNAKLAR: Metnin sonuna 'KAYNAKLAR:' ekle ve gerçek kitap/makale isimlerini listele.\n"
+    "1. SARSICI KANCA (HOOK): Metne ASLA klasik cümlelerle başlama. İlk 1-2 cümlen 'ters köşe' yapmalı, "
+    "genel bilinen bir yanlışı iddia etmeli veya izleyiciyi şok edecek, 'Nasıl olur?' dedirtecek provokatif bir "
+    "tespitle başlamalıdır. (Örn: 'Sanılanın aksine, İstanbul fethedilirken Akşemsettin orada değildi' gibi sarsıcı bir giriş.) "
+    "Bu giriş konunun özüyle bağlantılı ama inanılmaz merak uyandırıcı olmalı.\n"
+    "2. METİN: Bu sarsıcı girişin ardından, olayın akademik ve gerçek yüzünü sade, akıcı bir Türkçe ile anlat. "
+    "En az 450-500 kelime uzunluğunda olsun.\n"
+    "3. KAYNAKLAR: Metnin sonuna 'KAYNAKLAR:' ekle ve gerçek kaynakları listele.\n"
     "4. PROMPTLAR: En sona '---PROMPTLAR---' yazıp 8-15 adet numaralı, sinematik İNGİLİZCE promptlar üret."
 )
 
 if st.button("Araştır"):
-    konu = ozel_konu if (mod == "✍️ Manuel" and ozel_konu) else "Tarihten çok sarsıcı ve kanıtlanmış bir olay seç."
+    konu = ozel_konu if (mod == "✍️ Manuel" and ozel_konu) else "Tarihten çok sarsıcı ve yanlış bilinen bir olay seç."
     
     with st.spinner(""):
-        st.markdown('<p style="text-align:center; color:#8e918f;">Biraz uzun sürebilir; çünkü bu araştırma kapsamında her şeyi gerçek ve doğrulanabilir kaynaklardan inceliyoruz. Lütfen Bekleyin...</p>', unsafe_allow_html=True)
+        st.markdown('<p style="text-align:center; color:#8e918f;">Sarsıcı gerçekler araştırılıyor, kancalar hazırlanıyor. Lütfen Bekleyin...</p>', unsafe_allow_html=True)
         
         try:
             completion = client.chat.completions.create(
@@ -153,7 +156,7 @@ if st.button("Araştır"):
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": konu}
                 ],
-                temperature=0.7
+                temperature=0.75 # Yaratıcılığı artırmak için hafif yükseltildi
             )
             
             output = completion.choices[0].message.content
@@ -172,7 +175,7 @@ if st.button("Araştır"):
             # GÖSTERİM
             st.markdown("---")
             
-            # Kancalı Ana Metin
+            # Vurucu Kancalı Metin
             st.markdown(f'<div class="chat-bubble">{story.strip()}</div>', unsafe_allow_html=True)
 
             # Kaynaklar

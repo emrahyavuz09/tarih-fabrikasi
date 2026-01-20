@@ -3,92 +3,103 @@ from groq import Groq
 import re
 import urllib.parse
 
-# 1. GEMINI UI ARCHITECTURE (CSS)
+# 1. GEMINI UI ARCHITECTURE (CSS - AYNI KALDI)
 st.set_page_config(page_title="Tarih Fabrikası AI", page_icon="✨", layout="centered")
 
 st.markdown("""
     <style>
-    /* Gemini Temel Renk Paleti */
+    /* Gemini Karanlık Tema */
     .stApp {
         background-color: #131314 !important;
         color: #e3e3e3 !important;
-        font-family: 'Inter', -apple-system, sans-serif;
+        font-family: 'Inter', sans-serif;
     }
 
-    /* Ana Başlık: Gradient ve Zarif */
+    /* Başlık Alanı */
     .gemini-header {
-        background: linear-gradient(90deg, #4285f4, #9b72cb, #d96570);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
         font-size: 2.8rem;
         font-weight: 500;
         text-align: center;
+        background: linear-gradient(90deg, #4285f4, #9b72cb, #d96570);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
         margin-top: 2rem;
-        letter-spacing: -1px;
     }
     
     .gemini-subtitle {
         color: #8e918f;
         text-align: center;
-        font-size: 1.1rem;
-        margin-bottom: 3rem;
+        font-size: 1rem;
+        margin-bottom: 2rem;
     }
 
-    /* Giriş Alanı: Modern Pill Design */
-    .stTextInput > div > div > input {
-        background-color: #1e1f20 !important;
-        color: #e3e3e3 !important;
-        border: 1px solid #444746 !important;
-        border-radius: 28px !important;
-        padding: 14px 24px !important;
-        font-size: 1rem !important;
-        transition: border 0.3s ease;
-    }
-    .stTextInput > div > div > input:focus {
-        border: 1px solid #a8c7fa !important;
-        box-shadow: none !important;
-    }
-
-    /* Mod Seçimi (Radio): Minimalist Butonlar */
-    div[data-testid="stRadio"] > div {
+    /* MOD SEÇİMİ (RADIO) - TAM ORTALI VE BEYAZ METİN */
+    div[data-testid="stRadio"] {
+        display: flex;
         justify-content: center;
-        gap: 12px;
+        width: 100%;
+    }
+    div[data-testid="stRadio"] > div {
+        flex-direction: row;
+        justify-content: center;
+        gap: 15px;
+    }
+    div[data-testid="stRadio"] label p {
+        color: #ffffff !important; /* BEYAZ YAZI */
+        font-size: 1rem !important;
+        font-weight: 500 !important;
     }
     div[data-testid="stRadio"] label {
         background-color: #1e1f20 !important;
         border: 1px solid #444746 !important;
-        padding: 8px 18px !important;
-        border-radius: 20px !important;
-        color: #c4c7c5 !important;
-        font-size: 0.9rem !important;
+        padding: 10px 24px !important;
+        border-radius: 24px !important;
     }
-    div[data-testid="stRadio"] label[data-baseweb="radio"] > div:first-child { display: none; } /* Yuvarlakları gizle */
 
-    /* Ana Aksiyon Butonu */
+    /* Giriş Kutusu (Pill Design) */
+    .stTextInput > div > div > input {
+        background-color: #1e1f20 !important;
+        color: #ffffff !important;
+        border: 1px solid #444746 !important;
+        border-radius: 28px !important;
+        padding: 12px 24px !important;
+        text-align: center;
+    }
+
+    /* ARAŞTIR BUTONU (Gemini Mavi) */
+    div.stButton {
+        display: flex;
+        justify-content: center;
+        margin-top: 15px;
+    }
     div.stButton > button {
         background-color: #a8c7fa !important;
         color: #062e6f !important;
         border: none !important;
         border-radius: 24px !important;
-        padding: 10px 32px !important;
+        padding: 10px 40px !important;
         font-weight: 600 !important;
-        margin: 20px auto !important;
-        display: block !important;
-        transition: all 0.2s ease;
     }
     div.stButton > button:hover {
         background-color: #d3e3fd !important;
-        transform: scale(1.02);
     }
 
-    /* Sonuç Alanı: Chat Bubble Style */
-    .result-bubble {
-        background-color: transparent;
-        max-width: 700px;
+    /* Metin ve Prompt Akışı (Sade Gemini Tarzı) */
+    .chat-bubble {
+        max-width: 750px;
         margin: 20px auto;
         line-height: 1.8;
         font-size: 1.1rem;
         color: #e3e3e3;
+    }
+    .prompt-bubble {
+        max-width: 750px;
+        margin: 20px auto;
+        line-height: 1.6;
+        font-size: 0.95rem;
+        color: #a8c7fa; /* Promptlar için mavi ton */
+        font-family: monospace;
+        white-space: pre-wrap;
     }
 
     /* Kaynak Kartları */
@@ -97,97 +108,99 @@ st.markdown("""
         border: 1px solid #444746;
         border-radius: 16px;
         padding: 16px;
-        margin-top: 15px;
+        margin: 15px auto;
         max-width: 600px;
-        margin-left: auto;
-        margin-right: auto;
+        text-align: center;
     }
     .source-btn {
         text-decoration: none;
         color: #a8c7fa !important;
-        font-size: 0.85rem;
-        margin-right: 15px;
+        font-size: 0.9rem;
+        margin: 0 10px;
         font-weight: 500;
-    }
-    .source-btn:hover { text-decoration: underline; }
-
-    /* Bekleme Animasyonu */
-    .loader-text {
-        color: #8e918f;
-        text-align: center;
-        font-style: italic;
-        margin-top: 20px;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. UI ELEMENTS
+# 2. UI BAŞLANGIÇ
 st.markdown('<div class="gemini-header">Tarih Fabrikası</div>', unsafe_allow_html=True)
-st.markdown('<div class="gemini-subtitle">Derinlemesine, gerçek ve doğrulanabilir tarih araştırması</div>', unsafe_allow_html=True)
+st.markdown('<div class="gemini-subtitle">Yapay zeka ile doğrulanabilir tarih yolculuğu</div>', unsafe_allow_html=True)
 
-# Central Input Area
+# Seçim ve Input
 mod = st.radio("", ["🎲 Otomatik", "✍️ Manuel"], horizontal=True, label_visibility="collapsed")
 ozel_konu = ""
 if mod == "✍️ Manuel":
-    ozel_konu = st.text_input("", placeholder="Neyi keşfetmek istersin?", label_visibility="collapsed")
+    ozel_konu = st.text_input("", placeholder="Neyi merak ediyorsun?", label_visibility="collapsed")
 
-# 3. ENGINE (Llama 3.3 70B)
+# 3. API VE GÜÇLENDİRİLMİŞ SİSTEM TALİMATI
 client = Groq(api_key="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")
 
-if st.button("Araştırmayı Başlat"):
-    input_text = ozel_konu if (mod == "✍️ Manuel" and ozel_konu) else "Dünya tarihinden sarsıcı ve kanıtlanmış bir olay seç."
+# BURASI DÜZELTİLDİ: Kanca ve Prompt emirleri geri eklendi
+SYSTEM_PROMPT = (
+    "Sen akademik bir tarih profesörü ve viral içerik uzmanısın. "
+    "Şu kurallara KESİNLİKLE uy:\n"
+    "1. KANCA: İlk 2 cümle konuyla %100 bağlantılı, sarsıcı bir merak uyandırmalı.\n"
+    "2. METİN: Sade, akıcı bir Türkçe ile en az 450 kelime yaz. Başlık kullanma.\n"
+    "3. KAYNAKLAR: Sona 'KAYNAKLAR:' ekle ve gerçek kaynakları listele.\n"
+    "4. PROMPTLAR: En sona '---PROMPTLAR---' yazıp 8-15 adet numaralı, 9:16 dikey, sinematik İNGİLİZCE promptlar üret."
+)
+
+# 4. ÜRETİM
+if st.button("Araştır"):
+    konu = ozel_konu if (mod == "✍️ Manuel" and ozel_konu) else "Tarihten çok sarsıcı ve kanıtlanmış bir olay seç."
     
     with st.spinner(""):
-        st.markdown('<p class="loader-text">Veriler taranıyor, kaynaklar doğrulanıyor. Lütfen bekleyin...</p>', unsafe_allow_html=True)
+        st.markdown('<p style="text-align:center; color:#8e918f;">Derin araştırma yapılıyor, kancalar hazırlanıyor...</p>', unsafe_allow_html=True)
         
         try:
             completion = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
                 messages=[
-                    {"role": "system", "content": "Akademik bir tarihçisin. Metni sade, akıcı ve başlık kullanmadan yaz. En az 450 kelime olsun. Sonunda 'KAYNAKLAR:' ve '---PROMPTLAR---' ekle."},
-                    {"role": "user", "content": input_text}
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": konu}
                 ],
-                temperature=0.6
+                temperature=0.65
             )
             
             output = completion.choices[0].message.content
             
-            # Content Logic
+            # İçerik Ayrıştırma
             if "---PROMPTLAR---" in output:
-                main_part, prompts = output.split("---PROMPTLAR---")
+                ust, prompts = output.split("---PROMPTLAR---")
             else:
-                main_part, prompts = output, ""
+                ust, prompts = output, ""
 
-            if "KAYNAKLAR:" in main_part:
-                story, sources_raw = main_part.split("KAYNAKLAR:")
+            if "KAYNAKLAR:" in ust:
+                story, sources_raw = ust.split("KAYNAKLAR:")
             else:
-                story, sources_raw = main_part, ""
+                story, sources_raw = ust, ""
 
-            # DISPLAY
+            # 5. GÖSTERİM
             st.markdown("---")
             
-            # Story Text
-            st.markdown(f'<div class="result-bubble">{story.strip()}</div>', unsafe_allow_html=True)
+            # Ana Metin (Kancalı)
+            st.markdown(f'<div class="chat-bubble">{story.strip()}</div>', unsafe_allow_html=True)
 
-            # Sources
+            # Kaynaklar
             if sources_raw:
-                st.markdown('<p style="text-align:center; color:#8e918f; margin-top:50px;">Referans Alınan Kaynaklar</p>', unsafe_allow_html=True)
+                st.markdown('<p style="text-align:center; color:#8e918f; margin-top:40px;">Doğrulama Kaynakları</p>', unsafe_allow_html=True)
                 for s in sources_raw.strip().split('\n'):
                     s_clean = re.sub(r'^[0-9\-\.\*\s]+', '', s.strip())
                     if s_clean:
                         q = urllib.parse.quote(s_clean)
                         st.markdown(f"""
                         <div class="source-box">
-                            <div style="margin-bottom:8px; font-size:0.95rem;">{s_clean}</div>
-                            <a href="https://www.google.com/search?q={q}" target="_blank" class="source-btn">Google'da Doğrula</a>
-                            <a href="https://scholar.google.com/scholar?q={q}" target="_blank" class="source-btn">Akademik Kaynağa Git</a>
+                            <div style="margin-bottom:8px;">{s_clean}</div>
+                            <a href="https://www.google.com/search?q={q}" target="_blank" class="source-btn">🔍 Google</a>
+                            <a href="https://scholar.google.com/scholar?q={q}" target="_blank" class="source-btn">🎓 Akademik</a>
                         </div>
                         """, unsafe_allow_html=True)
-
-            # Image Prompts
+            
+            # BURASI DÜZELTİLDİ: Promptların gösterimi geri eklendi
             if prompts:
-                st.markdown('<p style="text-align:center; color:#8e918f; margin-top:50px;">Görsel Üretim Promptları</p>', unsafe_allow_html=True)
-                st.markdown(f'<div class="result-bubble" style="color:#a8c7fa; font-family:monospace; font-size:0.9rem;">{prompts.strip()}</div>', unsafe_allow_html=True)
+                 st.markdown('<p style="text-align:center; color:#8e918f; margin-top:40px;">Sinematik Görsel Promptları</p>', unsafe_allow_html=True)
+                 st.markdown(f'<div class="prompt-bubble">{prompts.strip()}</div>', unsafe_allow_html=True)
+
 
         except Exception as e:
-            st.error(f"Teknik bir sorun oluştu: {e}")
+            st.error(f"Hata: {e}")

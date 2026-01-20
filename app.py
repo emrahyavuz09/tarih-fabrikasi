@@ -3,7 +3,7 @@ from groq import Groq
 import re
 import urllib.parse
 
-# 1. PREMIUM UI ARCHITECTURE (CSS)
+# 1. PREMIUM UI ARCHITECTURE (Görsel Tasarım)
 st.set_page_config(page_title="Tarih Haber AI", page_icon="🏛️", layout="centered")
 
 st.markdown("""
@@ -50,15 +50,18 @@ st.markdown("""
         text-align: justify;
     }
 
-    /* Kopyalama Butonu ve Kod Alanı Tasarımı */
-    div[data-testid="stCodeBlock"] {
-        background-color: #000000 !important;
-        border: 1px solid #333 !important;
-        border-radius: 12px !important;
-    }
+    div[data-testid="stCodeBlock"] { background-color: #000000 !important; border: 1px solid #333 !important; border-radius: 12px !important; }
 
-    .source-box { background: #252833; border-radius: 12px; padding: 15px; margin: 10px 0; border: 1px solid #3d4152; }
-    .source-link { color: #FFCC00 !important; font-weight: 600; text-decoration: none; margin-right: 15px; }
+    .source-box { 
+        background: #1e1f20; border-radius: 16px; padding: 20px; 
+        margin: 15px auto; border: 1px solid #333; max-width: 650px; text-align: center;
+    }
+    .source-btn {
+        text-decoration: none; color: #FFCC00 !important; font-size: 0.85rem;
+        margin: 0 8px; font-weight: 600; padding: 6px 12px; border: 1px solid #FFCC00;
+        border-radius: 20px; transition: 0.3s;
+    }
+    .source-btn:hover { background-color: #FFCC00; color: #000 !important; }
     
     h2, h3 { text-align: center !important; margin-top: 40px !important; color: #FFCC00 !important; }
     </style>
@@ -73,7 +76,7 @@ ozel_konu = ""
 if mod == "✍️ Manuel":
     ozel_konu = st.text_input("", placeholder="Merak ettiğiniz bir konuyu buraya yazın...", label_visibility="collapsed")
 
-# 3. MOTOR (Sistem Talimatı Güncellendi)
+# 3. MOTOR (Llama 3.3 & Gelişmiş Komutlar)
 client = Groq(api_key="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")
 
 SYSTEM_PROMPT = (
@@ -82,16 +85,14 @@ SYSTEM_PROMPT = (
     "1. SARSICI KANCA: Metne ASLA klasik başlama. İlk 2 cümlen provokatif, ters köşe ve şok edici bir iddia olsun.\n"
     "2. METİN: Akademik gerçekleri akıcı bir dille anlat. En az 450-500 kelime olsun.\n"
     "3. KAYNAKLAR: Metin bitince 'KAYNAKLAR:' başlığı altında kaynakları ver.\n"
-    "4. PROMPTLAR (NUMARALI): En sona '---PROMPTLAR---' yaz. Buraya hikayedeki sahneleri 1-den başlayarak "
-    "numaralandırılmış ve alt alta olacak şekilde 10 adet İngilizce sinematik prompt olarak yaz. "
-    "Örn:\n1. Prompt\n2. Prompt\n3. Prompt..."
+    "4. PROMPTLAR: En sona '---PROMPTLAR---' yaz. Buraya sahneleri 1-den başlayarak numaralı ve alt alta 10 adet İngilizce prompt olarak yaz."
 )
 
 if st.button("ARAŞTIRMAYI BAŞLAT"):
     konu = ozel_konu if (mod == "✍️ Manuel" and ozel_konu) else "Tarihten çok sarsıcı ve yanlış bilinen bir olay seç."
     
     with st.spinner(""):
-        st.markdown('<p style="text-align:center; color:#FFCC00; font-style:italic;">Arşivler taranıyor, senaryo ve promptlar hazırlanıyor...</p>', unsafe_allow_html=True)
+        st.markdown('<p style="text-align:center; color:#FFCC00; font-style:italic;">Arşivler her dalda taranıyor, üçlü doğrulama sistemi hazırlanıyor...</p>', unsafe_allow_html=True)
         
         try:
             completion = client.chat.completions.create(
@@ -102,7 +103,6 @@ if st.button("ARAŞTIRMAYI BAŞLAT"):
             
             output = completion.choices[0].message.content
             
-            # İçerik Ayırma
             if "---PROMPTLAR---" in output:
                 story_part, prompts = output.split("---PROMPTLAR---")
             else:
@@ -113,32 +113,35 @@ if st.button("ARAŞTIRMAYI BAŞLAT"):
             else:
                 main_story, sources_raw = story_part, ""
 
-            # 4. GÖSTERİM VE KOPYALAMA ALANLARI
+            # 4. GÖSTERİM
             st.markdown("---")
             
-            # Video Metni Bölümü
+            # İçerik
             st.subheader("📝 Araştırma Metni")
             st.markdown(f'<div class="content-card">{main_story.strip()}</div>', unsafe_allow_html=True)
-            
-            # Kopyalama Alanı (Metin İçin)
             with st.expander("📋 Metni Kopyalamak İçin Tıkla"):
                 st.code(main_story.strip(), language="text")
 
-            # Kaynaklar Bölümü
+            # Kaynaklar (ÜÇLÜ DOĞRULAMA)
             if sources_raw:
-                st.subheader("📚 Doğrulama Kaynakları")
+                st.subheader("📚 Çok Yönlü Doğrulama")
                 for s in sources_raw.strip().split('\n'):
                     s_clean = re.sub(r'^[0-9\-\.\*\s]+', '', s.strip())
                     if s_clean:
                         q = urllib.parse.quote(s_clean)
-                        st.markdown(f'<div class="source-box"><div style="margin-bottom:8px; font-weight:500;">{s_clean}</div><a href="https://www.google.com/search?q={q}" target="_blank" class="source-link">🔍 Google</a><a href="https://scholar.google.com/scholar?q={q}" target="_blank" class="source-link">🎓 Akademik</a></div>', unsafe_allow_html=True)
+                        st.markdown(f"""
+                        <div class="source-box">
+                            <div style="margin-bottom:12px; font-weight:500; font-size:1rem;">{s_clean}</div>
+                            <a href="https://www.google.com/search?q={q}" target="_blank" class="source-btn">🔍 Google</a>
+                            <a href="https://scholar.google.com/scholar?q={q}" target="_blank" class="source-btn">🎓 Akademik</a>
+                            <a href="https://www.google.com/search?q={q}+wikipedia" target="_blank" class="source-btn">🌐 Wikipedia</a>
+                        </div>
+                        """, unsafe_allow_html=True)
 
-            # Promptlar Bölümü (Numaralı ve Alt Alta)
+            # Promptlar
             if prompts:
                 st.subheader("🖼️ Sahne Bazlı Görsel Promptlar")
-                # Kopyalama ve Düzenli Gösterim Alanı (Promptlar İçin)
                 st.code(prompts.strip(), language="text")
-                st.info("💡 Yukarıdaki kod bloğunun sağ üstündeki ikona basarak tüm promptları topluca kopyalayabilirsiniz.")
 
         except Exception as e:
             st.error(f"Sistemsel Hata: {e}")

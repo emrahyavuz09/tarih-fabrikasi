@@ -161,7 +161,7 @@ if st.button("Hemen Araştır ve Oluştur"):
         try:
             # Groq üzerinden Llama 3 kullanarak hızlı ve ücretsiz üretim
             completion = client.chat.completions.create(
-                model="llama3-8b-8192",
+                model="llama-3.3-70b-versatile",
                 messages=[{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": konu_mesaji}],
                 temperature=0.6,
                 max_tokens=4096

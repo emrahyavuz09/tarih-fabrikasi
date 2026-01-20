@@ -3,151 +3,162 @@ from groq import Groq
 import re
 import urllib.parse
 
-# 1. GEMINI UI ARCHITECTURE (Görsel Tasarım)
-st.set_page_config(page_title="Tarih Fabrikası AI", page_icon="✨", layout="centered")
+# 1. TASARIM: Siyah-Beyaz Minimalizm + Animasyonlu Sarı-Turuncu Başlık
+st.set_page_config(page_title="Tarih Haber AI", page_icon="📜", layout="centered")
 
 st.markdown("""
     <style>
-    /* Gemini Teması */
+    /* Ana Tema: Saf Siyah */
     .stApp {
-        background-color: #131314 !important;
-        color: #e3e3e3 !important;
+        background-color: #000000 !important;
+        color: #ffffff !important;
         font-family: 'Inter', sans-serif;
     }
 
-    /* Başlık */
-    .gemini-header {
-        font-size: 2.8rem;
-        font-weight: 500;
-        text-align: center;
-        background: linear-gradient(90deg, #4285f4, #9b72cb, #d96570);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-top: 2rem;
-    }
-    
-    .gemini-subtitle {
-        color: #8e918f;
-        text-align: center;
-        font-size: 1rem;
-        margin-bottom: 2rem;
+    /* Yazıları Ortala */
+    h1, h2, h3, p, span, label, div {
+        text-align: center !important;
+        color: #ffffff !important;
     }
 
-    /* Mod Seçimi Butonları (Ortalı ve Beyaz) */
+    /* YANIP SÖNEN SARI-TURUNCU BAŞLIK ANİMASYONU */
+    @keyframes pulseGlow {
+        0% { text-shadow: 0 0 10px #FF8C00, 0 0 20px #FFCC00; opacity: 1; }
+        50% { text-shadow: 0 0 30px #FFCC00, 0 0 50px #FF8C00; opacity: 0.8; }
+        100% { text-shadow: 0 0 10px #FF8C00, 0 0 20px #FFCC00; opacity: 1; }
+    }
+
+    .animated-header {
+        font-size: 3.5rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, #FFCC00, #FF8C00);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: pulseGlow 2s infinite ease-in-out;
+        letter-spacing: -2px;
+        margin-top: 2rem;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+    }
+    
+    .minimal-subtitle {
+        color: #666666 !important;
+        font-size: 0.85rem;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 3rem;
+    }
+
+    /* MOD SEÇİMİ (Radio) - Ortalı ve Sade */
     div[data-testid="stRadio"] {
         display: flex;
         justify-content: center;
-        width: 100%;
+        margin-bottom: 25px;
     }
     div[data-testid="stRadio"] > div {
         flex-direction: row;
         justify-content: center;
-        gap: 15px;
+        gap: 30px;
     }
     div[data-testid="stRadio"] label p {
         color: #ffffff !important;
-        font-size: 1rem !important;
-        font-weight: 500 !important;
-    }
-    div[data-testid="stRadio"] label {
-        background-color: #1e1f20 !important;
-        border: 1px solid #444746 !important;
-        padding: 10px 24px !important;
-        border-radius: 24px !important;
+        font-weight: 400 !important;
     }
 
-    /* Input */
+    /* Giriş Kutusu (İnce Beyaz Çizgi) */
     .stTextInput > div > div > input {
-        background-color: #1e1f20 !important;
+        background-color: #000000 !important;
         color: #ffffff !important;
-        border: 1px solid #444746 !important;
-        border-radius: 28px !important;
-        padding: 12px 24px !important;
+        border: 1px solid #333333 !important;
+        border-radius: 0px !important;
+        padding: 15px;
         text-align: center;
+        font-size: 1rem;
+    }
+    .stTextInput > div > div > input:focus {
+        border: 1px solid #ffffff !important;
     }
 
-    /* Araştır Butonu */
+    /* ARAŞTIR BUTONU: Beyaz Üstüne Siyah (Keskin ve Net) */
     div.stButton {
         display: flex;
         justify-content: center;
-        margin-top: 15px;
+        margin-top: 2rem;
     }
     div.stButton > button {
-        background-color: #a8c7fa !important;
-        color: #062e6f !important;
+        background-color: #ffffff !important;
+        color: #000000 !important;
         border: none !important;
-        border-radius: 24px !important;
-        padding: 10px 40px !important;
-        font-weight: 600 !important;
+        border-radius: 0px !important;
+        padding: 12px 60px !important;
+        font-weight: 700 !important;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        transition: 0.4s;
+    }
+    div.stButton > button:hover {
+        background-color: #FFCC00 !important; /* Üstüne gelince sarı olsun */
+        transform: scale(1.05);
     }
 
-    /* Metin Alanları */
-    .chat-bubble {
+    /* Metin Alanı: Okunaklı ve Ferah */
+    .content-text {
         max-width: 750px;
-        margin: 20px auto;
-        line-height: 1.8;
-        font-size: 1.1rem;
-        color: #e3e3e3;
-    }
-    .prompt-bubble {
-        max-width: 750px;
-        margin: 20px auto;
-        line-height: 1.6;
-        font-size: 0.95rem;
-        color: #a8c7fa;
-        font-family: monospace;
-        white-space: pre-wrap;
+        margin: 40px auto;
+        line-height: 2;
+        font-size: 1.15rem;
+        font-weight: 300;
+        text-align: justify !important;
+        color: #e0e0e0 !important;
     }
 
-    /* Kaynaklar */
-    .source-box {
-        background-color: #1e1f20;
-        border: 1px solid #444746;
-        border-radius: 16px;
-        padding: 16px;
-        margin: 15px auto;
-        max-width: 600px;
-        text-align: center;
+    /* Alt Bölümler İçin İnce Çizgi */
+    hr {
+        border: 0;
+        border-top: 1px solid #222222;
+        margin: 40px 0;
     }
-    .source-btn {
-        text-decoration: none;
-        color: #a8c7fa !important;
-        font-size: 0.9rem;
-        margin: 0 10px;
-        font-weight: 500;
+
+    .minimal-link {
+        color: #ffffff !important;
+        text-decoration: underline;
+        font-size: 0.75rem;
+        margin: 0 15px;
+        letter-spacing: 1px;
     }
     </style>
     """, unsafe_allow_html=True)
 
-st.markdown('<div class="gemini-header">Tarih Fabrikası</div>', unsafe_allow_html=True)
-st.markdown('<div class="gemini-subtitle">Provokatif kancalar ve akademik doğrulama ile tarih araştırması</div>', unsafe_allow_html=True)
+# 2. ARAYÜZ
+st.markdown('<div class="animated-header">Tarih Haber</div>', unsafe_allow_html=True)
+st.markdown('<div class="minimal-subtitle">Dijital Arşiv ve Doğrulanabilir İçerik</div>', unsafe_allow_html=True)
 
+# Seçim ve Giriş
 mod = st.radio("", ["🎲 Otomatik", "✍️ Manuel"], horizontal=True, label_visibility="collapsed")
 ozel_konu = ""
 if mod == "✍️ Manuel":
-    ozel_konu = st.text_input("", placeholder="Neyi merak ediyorsun?", label_visibility="collapsed")
+    ozel_konu = st.text_input("", placeholder="ARAŞTIRILACAK KONUYU YAZIN", label_visibility="collapsed")
 
-# 2. PROVOKATİF SİSTEM TALİMATI (SYSTEM PROMPT)
+# 3. MOTOR (Sarsıcı Kancalı Sistem Talimatı)
 client = Groq(api_key="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")
 
 SYSTEM_PROMPT = (
-    "Sen akademik bir tarih profesörü ve viral içerik stratejistisin. "
-    "Çıktılarında teknik başlık kullanma. ŞU KURALLARA KESİNLİKLE UY:\n\n"
-    "1. SARSICI KANCA (HOOK): Metne ASLA klasik cümlelerle başlama. İlk 1-2 cümlen 'ters köşe' yapmalı, "
-    "genel bilinen bir yanlışı iddia etmeli veya izleyiciyi şok edecek, 'Nasıl olur?' dedirtecek provokatif bir "
-    "tespitle başlamalıdır. (Örn: 'Sanılanın aksine, İstanbul fethedilirken Akşemsettin orada değildi' gibi sarsıcı bir giriş.) "
-    "Bu giriş konunun özüyle bağlantılı ama inanılmaz merak uyandırıcı olmalı.\n"
-    "2. METİN: Bu sarsıcı girişin ardından, olayın akademik ve gerçek yüzünü sade, akıcı bir Türkçe ile anlat. "
-    "En az 450-500 kelime uzunluğunda olsun.\n"
-    "3. KAYNAKLAR: Metnin sonuna 'KAYNAKLAR:' ekle ve gerçek kaynakları listele.\n"
-    "4. PROMPTLAR: En sona '---PROMPTLAR---' yazıp 8-15 adet numaralı, sinematik İNGİLİZCE promptlar üret."
+    "Sen bir tarih profesörü ve içerik uzmanısın. "
+    "Çıktılarında başlık kullanma. ŞU KURALLARA KESİNLİKLE UY:\n\n"
+    "1. SARSICI KANCA: Metne mutlaka genel kanının aksine sarsıcı, provokatif ve 'ters köşe' bir iddiayla başla. "
+    "Örn: 'Sanılanın aksine, İstanbul fethedilirken Akşemsettin gemilerin karadan yürütülmesine karşıydı.' gibi "
+    "şok edici ama tarihsel temeli olan bir giriş yap.\n"
+    "2. METİN: Girişin ardından olayı akademik gerçeklerle en az 450-500 kelime anlat.\n"
+    "3. KAYNAKLAR: Sona 'KAYNAKLAR:' başlığı ekle.\n"
+    "4. PROMPTLAR: En sona '---PROMPTLAR---' yazıp 10 adet sinematik İngilizce prompt üret."
 )
 
-if st.button("Araştır"):
+# 4. ÇALIŞTIRMA
+if st.button("ARAŞTIRMAYI BAŞLAT"):
     konu = ozel_konu if (mod == "✍️ Manuel" and ozel_konu) else "Tarihten çok sarsıcı ve yanlış bilinen bir olay seç."
     
     with st.spinner(""):
-        st.markdown('<p style="text-align:center; color:#8e918f;">Sarsıcı gerçekler araştırılıyor, kancalar hazırlanıyor. Lütfen Bekleyin...</p>', unsafe_allow_html=True)
+        st.markdown('<p style="text-align:center; color:#555555; font-size:0.8rem;">BELGELER İNCELENİYOR. LÜTFEN BEKLEYİN...</p>', unsafe_allow_html=True)
         
         try:
             completion = client.chat.completions.create(
@@ -156,12 +167,12 @@ if st.button("Araştır"):
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": konu}
                 ],
-                temperature=0.75 # Yaratıcılığı artırmak için hafif yükseltildi
+                temperature=0.75
             )
             
             output = completion.choices[0].message.content
             
-            # İçerik Ayrıştırma
+            # İçerik Ayırma
             if "---PROMPTLAR---" in output:
                 main_part, prompts = output.split("---PROMPTLAR---")
             else:
@@ -173,30 +184,22 @@ if st.button("Araştır"):
                 story, sources_raw = main_part, ""
 
             # GÖSTERİM
-            st.markdown("---")
-            
-            # Vurucu Kancalı Metin
-            st.markdown(f'<div class="chat-bubble">{story.strip()}</div>', unsafe_allow_html=True)
+            st.markdown("<hr>", unsafe_allow_html=True)
+            st.markdown(f'<div class="content-text">{story.strip()}</div>', unsafe_allow_html=True)
 
-            # Kaynaklar
             if sources_raw:
-                st.markdown('<p style="text-align:center; color:#8e918f; margin-top:40px;">Doğrulama Kaynakları</p>', unsafe_allow_html=True)
+                st.markdown("<hr>", unsafe_allow_html=True)
+                st.markdown('<p style="text-align:center; font-size:0.7rem; color:#555555; letter-spacing:2px;">REFERANS KAYNAKLAR</p>', unsafe_allow_html=True)
                 for s in sources_raw.strip().split('\n'):
                     s_clean = re.sub(r'^[0-9\-\.\*\s]+', '', s.strip())
                     if s_clean:
                         q = urllib.parse.quote(s_clean)
-                        st.markdown(f"""
-                        <div class="source-box">
-                            <div style="margin-bottom:8px;">{s_clean}</div>
-                            <a href="https://www.google.com/search?q={q}" target="_blank" class="source-btn">🔍 Google</a>
-                            <a href="https://scholar.google.com/scholar?q={q}" target="_blank" class="source-btn">🎓 Akademik</a>
-                        </div>
-                        """, unsafe_allow_html=True)
+                        st.markdown(f'<div style="margin:10px auto;"><span style="font-size:0.9rem;">{s_clean}</span><br><a href="https://www.google.com/search?q={q}" target="_blank" class="minimal-link">GOOGLE</a><a href="https://scholar.google.com/scholar?q={q}" target="_blank" class="minimal-link">SCHOLAR</a></div>', unsafe_allow_html=True)
 
-            # Promptlar
             if prompts:
-                st.markdown('<p style="text-align:center; color:#8e918f; margin-top:40px;">Görsel Üretim Promptları</p>', unsafe_allow_html=True)
-                st.markdown(f'<div class="prompt-bubble">{prompts.strip()}</div>', unsafe_allow_html=True)
+                st.markdown("<hr>", unsafe_allow_html=True)
+                st.markdown('<p style="text-align:center; font-size:0.7rem; color:#555555; letter-spacing:2px;">GÖRSEL PROMPTLAR</p>', unsafe_allow_html=True)
+                st.markdown(f'<div class="content-text" style="font-family:monospace; font-size:0.9rem; color:#888888;">{prompts.strip()}</div>', unsafe_allow_html=True)
 
         except Exception as e:
-            st.error(f"Sistemsel Hata: {e}")
+            st.error(f"HATA: {e}")

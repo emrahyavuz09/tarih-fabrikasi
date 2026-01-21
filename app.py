@@ -10,9 +10,8 @@ if 'authed' not in st.session_state:
 # 2. PREMIUM UI ARCHITECTURE
 st.set_page_config(page_title="Tarih Haber AI", page_icon="🏛️", layout="centered")
 
-# Gelecekteki model davranışlarını (ton, dil, stil) özelleştirmek isterseniz 
-# 'Gemini talimatlarınız' kısmından bu tercihleri ekleyebilirsiniz.
-# https://gemini.google.com/saved-info adresini ziyaret edin.
+# Gelecekte modelin yanıt verme stilini (üslup, kısıtlamalar, format) 
+# buradan kalıcı olarak değiştirebilirsiniz: https://gemini.google.com/saved-info
 
 st.markdown("""
     <style>
@@ -55,9 +54,10 @@ st.markdown("""
     div.stButton > button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255, 204, 0, 0.4); }
 
     .content-card {
-        background-color: #0a0a0a; padding: 30px; border-radius: 20px;
-        border-left: 5px solid #FFCC00; margin: 30px auto; line-height: 1.9;
-        font-size: 1.15rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: justify;
+        background-color: #0a0a0a; padding: 35px; border-radius: 20px;
+        border-left: 5px solid #FFCC00; margin: 30px auto; line-height: 2.1;
+        font-size: 1.2rem; box-shadow: 0 10px 40px rgba(0,0,0,0.6); text-align: justify;
+        white-space: pre-wrap;
     }
 
     .source-box { background: #111; border-radius: 16px; padding: 20px; margin: 15px auto; border: 1px solid #333; text-align: center; }
@@ -71,7 +71,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 3. GİRİŞ KONTROLÜ
+# 3. GİRİŞ SİSTEMİ
 def login_screen():
     st.markdown('<div class="main-header">TARİH HABER</div>', unsafe_allow_html=True)
     st.markdown('<p class="sub-text">GÜVENLİ ERİŞİM PANELİ</p>', unsafe_allow_html=True)
@@ -102,41 +102,41 @@ else:
 
     st.markdown('<div class="main-header">TARİH HABER</div>', unsafe_allow_html=True)
 
-    # KATEGORİ SİSTEMİ
     kategoriler = ["Osmanlı Tarihi", "Roma Tarihi", "Mısır Tarihi", "Pers Tarihi", "Cumhuriyet Tarihi", "Bizans Tarihi", "Avrupa Tarihi"]
     secilen_kat = st.radio("Bir Tarih Kategorisi Seçin", kategoriler, horizontal=True)
     
-    manuel_konu = st.text_input("Özel Bir Konu Araştır (Opsiyonel)", placeholder="Örn: Napolyon'un Moskova Seferi...")
+    manuel_konu = st.text_input("Özel Konu Araştır (SADECE TARİH)", placeholder="Örn: Roma'nın hiç anlatılmayan karanlık yüzü...")
 
     try:
         api_key = st.secrets["GROQ_API_KEY"]
         client = Groq(api_key=api_key)
     except:
-        st.error("API Anahtarı eksik!")
+        st.error("API Anahtarı bulunamadı!")
         st.stop()
 
+    # 4. TARİH MUHAFIZI PROTOKOLLÜ SİSTEM TALİMATI
     SYSTEM_PROMPT = (
-        f"Sen bir tarih profesörüsün. SADECE TÜRKÇE KARAKTERLER KULLAN. Çince veya başka dilde karakter asla kullanma.\n"
-        f"ŞU KURALLARA UY:\n"
-        f"1. KONU: {secilen_kat} kategorisinden, daha önce işlenmemiş, sarsıcı ve yanlış bilinen bir olay seç.\n"
-        f"2. SARSICI KANCA: Metne mutlaka şok edici, 'ters köşe' bir iddiayla başla.\n"
-        f"3. METİN: Akademik gerçekleri akıcı anlat. En az 450-500 kelime. Tamamen Türkçe olsun.\n"
-        f"4. KAYNAKLAR: Sona 'KAYNAKLAR:' ekle.\n"
+        f"Sen bir tarih profesörü ve video senaryo yazarıısın. SADECE TÜRKÇE KARAKTERLER KULLAN.\n"
+        f"KRİTİK KURAL: Eğer kullanıcı tarih dışı bir şey sorarsa (selam, nasılsın, kod yaz, yemek tarifi, güncel hava durumu vb.), "
+        f"ona kibarca bu sistemin sadece tarih araştırmaları için tasarlandığını söyle ve araştırmayı yapma.\n\n"
+        f"EĞER KONU TARİH İSE ŞU KURALLARA UY:\n"
+        f"1. GİRİŞ (KANCA): Metne mutlaka 'Biliyor musun?' veya 'Sanılanın aksine...' ile başlayan, provokatif bir soruyla başla.\n"
+        f"2. OKUMA METNİ: Başlıklar olmadan tek bir akıcı anlatı olarak yaz. En az 450-500 kelime.\n"
+        f"3. DİL: Sade ve merak uyandırıcı. Konu: {secilen_kat}.\n"
+        f"4. KAYNAKLAR: Metnin en sonuna 'KAYNAKLAR:' başlığı ekle.\n"
         f"5. PROMPTLAR: En sona '---PROMPTLAR---' yazıp 10 adet numaralı İngilizce prompt üret."
     )
 
     if st.button("ARAŞTIRMAYI BAŞLAT"):
-        konu = manuel_konu if manuel_konu else f"{secilen_kat} hakkında en gizemli ve sarsıcı olay."
+        konu = manuel_konu if manuel_konu else f"{secilen_kat} kategorisinden en gizemli olay."
         with st.spinner("Arşivler taranıyor..."):
             try:
                 completion = client.chat.completions.create(
                     model="llama-3.3-70b-versatile",
                     messages=[{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": konu}],
-                    temperature=0.8
+                    temperature=0.75
                 )
                 output = completion.choices[0].message.content
-                
-                # Dil Temizliği (Hatalı Karakterleri engellemek için ek önlem)
                 output = re.sub(r'[^\x00-\x7FğüşıöçĞÜŞİÖÇ\n\r\t ]+', '', output)
 
                 if "---PROMPTLAR---" in output: story_part, prompts = output.split("---PROMPTLAR---")
@@ -146,27 +146,31 @@ else:
                 else: main_story, sources_raw = story_part, ""
 
                 st.markdown("---")
-                st.subheader(f"📝 {secilen_kat} Araştırması")
+                st.subheader(f"🎙️ Araştırma Sonucu")
                 st.markdown(f'<div class="content-card">{main_story.strip()}</div>', unsafe_allow_html=True)
-                with st.expander("📋 Kopyala"): st.code(main_story.strip(), language="text")
+                
+                # Eğer çıktı kısıtlı bir uyarı değilse kopyalama ve kaynakları göster
+                if "KAYNAKLAR:" in output:
+                    with st.expander("📋 Senaryoyu Kopyala"): st.code(main_story.strip(), language="text")
 
-                if sources_raw:
-                    st.subheader("📚 Üçlü Doğrulama")
-                    for s in sources_raw.strip().split('\n'):
-                        s_clean = re.sub(r'^[0-9\-\.\*\s]+', '', s.strip())
-                        if s_clean:
-                            q = urllib.parse.quote(s_clean)
-                            st.markdown(f"""
-                            <div class="source-box">
-                                <div style="margin-bottom:12px; font-weight:600;">{s_clean}</div>
-                                <a href="https://www.google.com/search?q={q}" target="_blank" class="source-btn">🔍 Google</a>
-                                <a href="https://scholar.google.com/scholar?q={q}" target="_blank" class="source-btn">🎓 Akademik</a>
-                                <a href="https://www.google.com/search?q={q}+wikipedia" target="_blank" class="source-btn">🌐 Wikipedia</a>
-                            </div>
-                            """, unsafe_allow_html=True)
+                    if sources_raw:
+                        st.subheader("📚 Üçlü Doğrulama")
+                        for s in sources_raw.strip().split('\n'):
+                            s_clean = re.sub(r'^[0-9\-\.\*\s]+', '', s.strip())
+                            if s_clean:
+                                q = urllib.parse.quote(s_clean)
+                                st.markdown(f"""
+                                <div class="source-box">
+                                    <div style="margin-bottom:12px; font-weight:600;">{s_clean}</div>
+                                    <a href="https://www.google.com/search?q={q}" target="_blank" class="source-btn">🔍 Google</a>
+                                    <a href="https://scholar.google.com/scholar?q={q}" target="_blank" class="source-btn">🎓 Akademik</a>
+                                    <a href="https://www.google.com/search?q={q}+wikipedia" target="_blank" class="source-btn">🌐 Wikipedia</a>
+                                </div>
+                                """, unsafe_allow_html=True)
 
-                if prompts:
-                    st.subheader("🖼️ Görsel Promptlar")
-                    st.code(prompts.strip(), language="text")
+                    if prompts:
+                        st.subheader("🖼️ Sahne Bazlı Promptlar")
+                        st.code(prompts.strip(), language="text")
+                
             except Exception as e:
                 st.error(f"Hata: {e}")
